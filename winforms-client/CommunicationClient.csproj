@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>CommunicationClient</RootNamespace>
+    <AssemblyName>CommunicationClient</AssemblyName>
+  </PropertyGroup>
+</Project>
+
