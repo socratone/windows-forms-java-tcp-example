@@ -6,8 +6,10 @@ using System.Windows.Forms;
 
 namespace CommunicationClient
 {
+    // TCP와 HTTP 에코 서버를 각각 시험할 수 있는 메인 화면이다.
     public sealed class MainForm : Form
     {
+        // 연결 또는 응답이 무한정 지연되지 않도록 네트워크 작업의 최대 대기 시간을 제한한다.
         private static readonly TimeSpan NetworkTimeout = TimeSpan.FromSeconds(5);
         private readonly TcpEchoClient tcpClient = new TcpEchoClient();
         private readonly HttpEchoClient httpClient = new HttpEchoClient();
@@ -28,6 +30,7 @@ namespace CommunicationClient
 
         public MainForm()
         {
+            // 디자이너 파일 없이 코드만으로 폼의 기본 속성과 탭 UI를 구성한다.
             Text = "WinForms - Java TCP/HTTP 통신 예제";
             ClientSize = new Size(840, 560);
             MinimumSize = new Size(720, 480);
@@ -38,6 +41,7 @@ namespace CommunicationClient
             tabs.TabPages.Add(BuildHttpPage());
             Controls.Add(tabs);
 
+            // 각 UI 이벤트를 실제 네트워크 작업 메서드에 연결한다.
             tcpConnect.Click += async (_, __) => await ConnectTcpAsync();
             tcpDisconnect.Click += (_, __) => DisconnectTcp("사용자가 연결을 해제했습니다.");
             tcpSend.Click += async (_, __) => await SendTcpAsync();
@@ -49,6 +53,7 @@ namespace CommunicationClient
 
         private TabPage BuildTcpPage()
         {
+            // 연결 설정, 메시지 입력, 통신 기록을 세로로 배치한다.
             var page = new TabPage("TCP 통신") { Padding = new Padding(12) };
             var root = NewTable(5);
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -78,6 +83,7 @@ namespace CommunicationClient
 
         private TabPage BuildHttpPage()
         {
+            // HTTP는 연결 과정 없이 URL과 본문을 입력해 요청하도록 구성한다.
             var page = new TabPage("HTTP 통신") { Padding = new Padding(12) };
             var root = NewTable(6);
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -99,6 +105,7 @@ namespace CommunicationClient
 
         private static TableLayoutPanel NewTable(int rows)
         {
+            // 한 개 열이 가용 너비를 모두 차지하는 공통 레이아웃을 만든다.
             var table = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = rows };
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             return table;
@@ -106,6 +113,7 @@ namespace CommunicationClient
 
         private static Control BuildMessageRow(TextBox message, Button send)
         {
+            // 입력란은 남은 너비를 사용하고 전송 버튼은 필요한 크기만 차지한다.
             var row = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2 };
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -118,6 +126,7 @@ namespace CommunicationClient
 
         private static TextBox CreateLogBox()
         {
+            // 사용자가 수정할 수 없는 여러 줄 통신 기록 창을 만든다.
             return new TextBox
             {
                 Dock = DockStyle.Fill,
@@ -131,6 +140,7 @@ namespace CommunicationClient
 
         private async Task ConnectTcpAsync()
         {
+            // 중복 클릭을 막은 상태에서 입력한 주소로 TCP 연결을 시도한다.
             SetTcpBusy(true);
             try
             {
@@ -158,6 +168,7 @@ namespace CommunicationClient
                 return;
             }
 
+            // 하나의 요청과 응답이 끝날 때까지 추가 전송을 막는다.
             tcpSend.Enabled = false;
             try
             {
@@ -185,6 +196,7 @@ namespace CommunicationClient
                 return;
             }
 
+            // 폼이 닫히면 closing.Token이 진행 중인 HTTP 요청도 함께 취소한다.
             httpSend.Enabled = false;
             try
             {
@@ -211,6 +223,7 @@ namespace CommunicationClient
 
         private void SetTcpBusy(bool busy)
         {
+            // 작업 진행 여부와 실제 연결 상태에 맞춰 조작 가능한 컨트롤만 활성화한다.
             var connected = tcpClient.IsConnected;
             tcpConnect.Enabled = !busy && !connected;
             tcpDisconnect.Enabled = !busy && connected;
@@ -221,6 +234,7 @@ namespace CommunicationClient
 
         private void DisconnectTcp(string message)
         {
+            // 소켓 자원을 정리한 뒤 화면을 미연결 상태로 되돌린다.
             tcpClient.Disconnect();
             Log(tcpLog, message);
             SetTcpBusy(false);
@@ -228,6 +242,7 @@ namespace CommunicationClient
 
         private static async Task SendOnEnterAsync(KeyEventArgs e, Func<Task> sender)
         {
+            // 입력란에서 Enter를 누르면 줄바꿈 대신 해당 프로토콜의 전송을 실행한다.
             if (e.KeyCode != Keys.Enter) return;
             e.SuppressKeyPress = true;
             await sender();
@@ -235,11 +250,13 @@ namespace CommunicationClient
 
         private static void Log(TextBox box, string message)
         {
+            // 송수신 순서를 알아볼 수 있도록 현재 시각과 함께 기록한다.
             box.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
         }
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
+            // 종료 중인 비동기 작업을 취소하고 모든 네트워크 자원을 해제한다.
             closing.Cancel();
             tcpClient.Dispose();
             httpClient.Dispose();
